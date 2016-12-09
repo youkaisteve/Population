@@ -93,5 +93,4 @@ ENV/
 .idea/
 
 # self
-caches/
 **/*.pickle
