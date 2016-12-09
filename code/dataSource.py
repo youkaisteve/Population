@@ -2,7 +2,7 @@ import xlrd
 import re
 
 
-data_base_path = '../../data/population-migration-all/'
+data_base_path = '../data/population-migration-all/'
 
 
 def get_files(file_path):

@@ -91,3 +91,7 @@ ENV/
 # pycharm
 .DS_Store
 .idea/
+
+# self
+caches/
+**/*.pickle
