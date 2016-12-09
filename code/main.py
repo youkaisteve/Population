@@ -1,9 +1,12 @@
 import pickle
 import pandas as pd
-from os import walk
+from os import walk, makedirs, path
 from os.path import basename, splitext
 
 from dataSource import get_files, get_file_content, data_base_path
+
+province_path = 'caches/by_province/'
+year_path = 'caches/by_year/'
 
 
 # 按省份来保存每年的人口数据
@@ -14,7 +17,9 @@ def save_by_province():
         area, data_list = get_file_content(data_base_path + files[i] + '.xls')
 
         frame = pd.DataFrame(data_list, columns=columns)
-        with open('caches/by_province/' + area + '.pickle', 'wb') as f:
+        if path.exists(province_path) is False:
+            makedirs(province_path)
+        with open(province_path + area + '.pickle', 'wb') as f:
             pickle.dump(frame, f)
 
 
@@ -29,7 +34,7 @@ def save_by_year():
             "datas": []
         })
 
-    for (dirpath, dirnames, filenames) in walk('caches/by_province'):
+    for (dirpath, dirnames, filenames) in walk(province_path):
         for i in range(filenames.__len__()):
             data_list = load_by_province(filenames[i], True)
             for j in range(data_list.__len__()):
@@ -48,7 +53,9 @@ def save_by_year():
                         })
 
     for i in range(year_data.__len__()):
-        with open('caches/by_year/%d' % year_data[i]['year'] + '.pickle', 'wb') as f:
+        if path.exists(year_path) is False:
+            makedirs(year_path)
+        with open(year_path + str(year_data[i]['year']) + '.pickle', 'wb') as f:
             pickle.dump(year_data[i]['datas'], f)
 
 
@@ -65,7 +72,7 @@ def load_by_province(province, is_full_name):
 
 # 根据年份来加载人口数据
 def load_by_year(year):
-    content = open('caches/by_year/' + year + '.pickle', 'rb')
+    content = open(year_path + year + '.pickle', 'rb')
     return pickle.load(content)
 
 
@@ -74,7 +81,7 @@ def load_all_year():
     datas = []
     years = load_years()
     for i in range(years.__len__()):
-        content = open('caches/by_year/' + str(years[i]) + '.pickle', 'rb')
+        content = open(year_path + str(years[i]) + '.pickle', 'rb')
         datas.append({'year': years[i], 'data': pickle.load(content)})
     return datas
 
