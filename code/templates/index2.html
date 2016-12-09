@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="http://libs.baidu.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/static/jquery.min.js"></script>
+    <script src="/static/echarts.js"></script>
+    <script src="/static/china.js"></script>
+    <script src="/static/map_options.js"></script>
+    <script type=text/javascript>
+         var curYear = 1954;
+         var years = [];
+         function loadYear(){
+            years = []
+            $.ajax({
+                url: '/load_year',
+                dataType: 'JSON',
+                type: 'GET',
+                success: function(data){
+                    var result = data.Result;
+                    for(var i =0;i<result.length;i++){
+                        var varItem = new Option(result[i], result[i]);
+                        $("#year").append(varItem);
+                        years.push(result[i]);
+                    }
+                }
+            });
+         }
+        $(function() {
+
+            var mapOption = new MapOption();
+
+            var chart = echarts.init(document.getElementById('main'));
+
+            loadYear();
+
+            function loadData(year,auto){
+                  $.ajax({
+                    url: '/load',
+                    data:{
+                      year: year
+                    },
+                    dataType: 'JSON',
+                    type: 'GET',
+                    success: function(data){
+                        //var series = [
+                          //  $.extend(mapOption.baseSeriesOption(),{name:'总人口'}),
+                            //$.extend(mapOption.baseSeriesOption(),{name:'流出人口'}),
+                            //$.extend(mapOption.baseSeriesOption(),{name:'流入人口'}),
+                            //$.extend(mapOption.baseSeriesOption(),{name:'净流入'}),
+                        //];
+
+                        var typeText = $('#type').find("option:selected").text();
+                        var typeValue = $('#type').val();
+                        var series = [
+                            $.extend(mapOption.baseSeriesOption(),{name:typeText}),
+                        ]
+                        mapOption.setLegend(typeText);
+
+                        var pdatas = data.Result;
+                        mapOption.setSubTitle(year + '年人口分布');
+
+                        var maxNumber = 0;
+                        for(var i = 0;i<pdatas.length;i++){
+                            var pName = mapOption.getProvinceName(pdatas[i].province);
+                            if(pName == '全国'){
+                                continue;
+                            }
+                            //if(maxNumber < pdatas[i].avg_num){
+                              //  maxNumber = pdatas[i].avg_num;
+                            //}
+
+                            var value;
+                            switch(typeValue){
+                                case '1':
+                                    value=pdatas[i].avg_num;
+                                    break;
+                                case '2':
+                                    value=pdatas[i].out_num;
+                                    break;
+                                case '3':
+                                    value=pdatas[i].in_num;
+                                    break;
+                                case '4':
+                                    value=pdatas[i].net_in;
+                            }
+                            series[0].data.push({
+                                name:pName,
+                                value:value
+                            });
+                        }
+
+                        mapOption.setSeries(series)
+                        chart.setOption(mapOption.option);
+
+                        if(curYear < 1987 && auto){
+                            curYear++;
+                            timeoutHandler = setTimeout(function(){
+                                loadData(curYear,true);
+                            },2000)
+                        }
+                    }
+                });
+             }
+
+             var timeoutHandler;
+             $('#start').click(function(){
+                loadData(curYear,true);
+             });
+
+             $('#stop').click(function(){
+                clearTimeout(timeoutHandler);
+             });
+
+             $('#type').change(function(){
+                clearTimeout(timeoutHandler);
+                curYear = 1954;
+                switch($('#type').val()){
+                    case '1':
+                        mapOption.setMaxValue(100000000);
+                        break;
+                    case '2':
+                        mapOption.setMaxValue(5000000);
+                        break;
+                    case '3':
+                        mapOption.setMaxValue(5000000);
+                        break;
+                    case '4':
+                        mapOption.setMaxValue(500000);
+                }
+             });
+
+             $('#year').change(function(evt){
+                clearTimeout(timeoutHandler);
+                curYear = evt.currentTarget.value;
+                loadData(curYear);
+             })
+        });
+    </script>
+    <style>
+        .map-container{
+            position: absolute;
+            right: 0;
+            bottom:0;
+            width: 50%;
+            height: 100%;
+            padding: 0;
+            padding-left: 5px;
+            border: none;
+            z-index: 30;
+            background: #f3f3f3;
+        }
+    </style>
+</head>
+<body style="height:100%">
+<div class="container" style="height:100%">
+    <div class="header">
+        <h3 class="text-muted">获取人口迁移数据</h3>
+    </div>
+    <hr/>
+    <div>
+        <p>
+            <select id="type">
+                <option value="1">总人口</option>
+                <option value="2">流出人口</option>
+                <option value="3">流入人口</option>
+                <option value="4">净流入</option>
+            </select>
+            <select id="year">
+            </select>
+            <button class="btn btn-success" id="start">Start</button>
+            <button class="btn btn-success" id="stop">Stop</button>
+        <p>
+    </div>
+    <div id="result" style="width:100%;textAlign:'center';"></div>
+    <hr/>
+    <div class="map-container">
+        <div id="main" style="width:100%;height:90%;"></div>
+    </div>
+</div>
+</body>
+</html>

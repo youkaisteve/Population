@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="http://libs.baidu.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/static/jquery.min.js"></script>
+    <script src="/static/echarts.min.js"></script>
+    <script src="/static/china.js"></script>
+    <script src="/static/map_options.js"></script>
+    <script type=text/javascript>
+         function loadProvince(){
+            $.ajax({
+                url: '/load_year',
+                dataType: 'JSON',
+                type: 'GET',
+                success: function(data){
+                    var result = data.Result;
+                    for(var i =0;i<result.length;i++){
+                        var varItem = new Option(result[i], result[i]);
+                        $("#year").append(varItem);
+                    }
+                }
+            });
+         }
+        $(function() {
+
+            var mapOption = new MapOption();
+
+            var chart = echarts.init(document.getElementById('main'));
+            chart.setOption(mapOption.option);
+
+            loadProvince();
+
+            $('#load').click(function(){
+                  $.ajax({
+                    url: '/load',
+                    data:{
+                      year: $('#year').val()
+                    },
+                    dataType: 'JSON',
+                    type: 'GET',
+                    success: function(data){
+                        var series = [
+                            $.extend(mapOption.baseSeriesOption(),{name:'总人口'}),
+                            $.extend(mapOption.baseSeriesOption(),{name:'流出人口'}),
+                            $.extend(mapOption.baseSeriesOption(),{name:'流入人口'}),
+                            $.extend(mapOption.baseSeriesOption(),{name:'净流入'}),
+                        ];
+
+                        var pdatas = data.Result;
+                        for(var i = 0;i<pdatas.length;i++){
+                            var pName = mapOption.getProvinceName(pdatas[i].province);
+                            series[0].data.push({
+                                name:pName,
+                                value:pdatas[i].avg_num
+                            });
+
+                            series[1].data.push({
+                                name:pName,
+                                value:pdatas[i].out_num
+                            });
+
+                            series[2].data.push({
+                                name:pName,
+                                value:pdatas[i].in_num
+                            });
+
+                            series[3].data.push({
+                                name:pName,
+                                value:pdatas[i].net_in
+                            });
+                        }
+
+                        mapOption.setSeries(series)
+                        console.log(mapOption.option)
+                        chart.setOption(mapOption.option);
+                    }
+                });
+             });
+        });
+
+
+
+
+    </script>
+    <style>
+        .map-container{
+            position: absolute;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            padding: 0;
+            padding-left: 5px;
+            border: none;
+            z-index: 30;
+            background: #f3f3f3;
+        }
+
+    </style>
+</head>
+<body style="height:100%">
+    <div class="container" style="height:100%">
+        <div class="header">
+            <h3 class="text-muted">获取人口迁移数据</h3>
+        </div>
+        <hr/>
+        <div class="row">
+            <p>
+                年：<select type="text" id='year' name="year"></select>
+                <button class="btn btn-success" id="load">load</button>
+            <p>
+
+        </div>
+        <div id="result"></div>
+        <div id="main" style="width:100%;" class="map-container"></div>
+    </div>
+</body>
+</html>
