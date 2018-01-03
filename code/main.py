@@ -3,7 +3,7 @@ import pandas as pd
 from os import walk, makedirs, path
 from os.path import basename, splitext
 
-from dataSource import get_files, get_file_content, data_base_path
+from dataSource import get_files, get_file_content, DATA_BASE_PATH
 
 province_path = 'caches/by_province/'
 year_path = 'caches/by_year/'
@@ -11,10 +11,10 @@ year_path = 'caches/by_year/'
 
 # 按省份来保存每年的人口数据
 def save_by_province():
-    files = get_files(data_base_path + 'migr-agenda.xls')
+    files = get_files(DATA_BASE_PATH + 'migr-agenda.xls')
     columns = ['year', 'avg_num', 'in_num', 'in_rate', 'out_num', 'out_rate', 'net_in', 'net_in_rate']
     for i in range(files.__len__()):
-        area, data_list = get_file_content(data_base_path + files[i] + '.xls')
+        area, data_list = get_file_content(DATA_BASE_PATH + files[i] + '.xls')
 
         frame = pd.DataFrame(data_list, columns=columns)
         if path.exists(province_path) is False:

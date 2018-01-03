@@ -1,11 +1,15 @@
-import xlrd
 import re
 
+import xlrd
 
-data_base_path = '../data/population-migration-all/'
+DATA_BASE_PATH = '../data/population-migration-all/'
 
 
 def get_files(file_path):
+    """get files.
+    Keyword arguments:
+    file_path -- file path
+    """
     result = []
 
     work_book = xlrd.open_workbook(file_path)
